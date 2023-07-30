@@ -1,0 +1,122 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>JSON CRUD Operations</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>JSON CRUD Operations</h1>
+
+    <div>
+        <label for="name">Name:</label>
+        <input type="text" id="name" />
+        <label for="age">Age:</label>
+        <input type="number" id="age" />
+        <button id="btnAdd">Add Person</button>
+    </div>
+
+    <ul id="peopleList"></ul>
+
+    <script>
+        function displayPeople(people) {
+            debugger;
+            var $peopleList = $("#peopleList");
+            $peopleList.empty();
+
+            $.each(people, function (index, person) {
+                var listItem = $("<li>").text("Name: " + person.Name + ", Age: " + person.Age);
+                var editButton = $("<button>").text("Edit").data("id", person.Id);
+                editButton.click(function () {
+                    showEditDialog($(this).data("id"), person.Name, person.Age);
+                });
+                var deleteButton = $("<button>").text("Delete").data("id", person.Id);
+                deleteButton.click(function () {
+                    deletePerson($(this).data("id"));
+                });
+                listItem.append(editButton).append(deleteButton);
+                $peopleList.append(listItem);
+            });
+        }
+
+        var apiUrl = 'https://localhost:44362/api/values';
+        function refreshPeople() {
+            debugger;
+            $.ajax({
+                url: apiUrl,
+                type: "GET",
+                dataType: "json",
+                success: function (data) {
+                    displayPeople(data);
+                }
+            });
+        }
+
+        function addPerson(person) {
+            debugger;
+            $.ajax({
+                url: apiUrl,
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(person),
+                success: function () {
+                    refreshPeople();
+                }
+            });
+        }
+
+        function deletePerson(id) {
+            debugger;
+            $.ajax({
+                url: apiUrl+"/" + id,
+                type: "DELETE",
+                success: function () {
+                    refreshPeople();
+                }
+            });
+        }
+
+        function updatePerson(id, updatedPerson) {
+            debugger;
+            $.ajax({
+                url: apiUrl+"/" + id,
+                type: "PUT",
+                contentType: "application/json",
+                data: JSON.stringify(updatedPerson),
+                success: function () {
+                    refreshPeople();
+                }
+            });
+        }
+
+        function showEditDialog(id, name, age) {
+            debugger;
+            var updatedName = prompt("Update Name:", name);
+            var updatedAge = parseInt(prompt("Update Age:", age));
+
+            if (updatedName && !isNaN(updatedAge)) {
+                var updatedPerson = {
+                    Id: id,
+                    Name: updatedName,
+                    Age: updatedAge
+                };
+                updatePerson(id, updatedPerson);
+            }
+        }
+
+        $(document).ready(function () {
+            // Load existing people when the page loads
+            refreshPeople();
+
+            // Add person button click event
+            $("#btnAdd").click(function () {
+                debugger;
+                var person = {
+                    Name: $("#name").val(),
+                    Age: parseInt($("#age").val())
+                };
+                addPerson(person);
+            });
+        });
+    </script>
+</body>
+</html>
